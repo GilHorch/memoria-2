@@ -4,145 +4,150 @@
   <meta charset="UTF-8">
   <title>Jogo da Memória</title>
   <style>
-    /* Define o estilo para o tabuleiro */
+    /* Define o estilo do tabuleiro */
     .board {
-      display: grid; /* Utiliza grid layout para organizar as cartas */
-      grid-template-columns: repeat(4, 200px); /* Cria 4 colunas com 100px cada */
-      gap: 10px; /* Espaçamento de 10px entre as cartas */
-      justify-content: center; /* Centraliza o grid horizontalmente */
-      margin-top: 50px; /* Espaço de 50px na parte superior */
+      display: grid; /* Usa um layout de grade */
+      grid-template-columns: repeat(4, 200px); /* Define 4 colunas de 200px */
+      gap: 10px; /* Espaço entre as cartas */
+      justify-content: center; /* Centraliza o tabuleiro */
+      margin-top: 50px; /* Margem superior */
     }
-    /* Define o estilo padrão para cada carta */
+    
+    /* Estiliza as cartas */
     .card {
       width: 200px; /* Largura da carta */
       height: 300px; /* Altura da carta */
-      background-color: #ccc; /* Cor de fundo padrão */
-      display: flex; /* Utiliza flexbox para centralizar o conteúdo interno */
-      align-items: center; /* Centraliza verticalmente o conteúdo */
-      justify-content: center; /* Centraliza horizontalmente o conteúdo */
-      cursor: pointer; /* Altera o cursor para indicar que a carta é clicável */
-      border-radius: 5px; /* Bordas arredondadas para a carta */
+      background-color: #ccc; /* Cor padrão da carta */
+      display: flex; /* Usa flexbox para centralizar o conteúdo */
+      align-items: center; /* Alinha verticalmente */
+      justify-content: center; /* Alinha horizontalmente */
+      cursor: pointer; /* Altera o cursor ao passar sobre a carta */
+      border-radius: 5px; /* Bordas arredondadas */
     }
-    /* Define o estilo para cartas que foram viradas */
+    
+    /* Estilo para cartas viradas */
     .flipped {
-      background-color: #fff; /* Altera a cor de fundo para branco quando a carta é virada */
+      background-color: #fff; /* Muda a cor de fundo */
+    }
+    
+    /* Estiliza o temporizador */
+    #timer {
+      text-align: center; /* Centraliza o texto */
+      font-size: 24px; /* Tamanho da fonte */
+      margin-top: 20px; /* Espaçamento superior */
     }
   </style>
 </head>
 <body>
-  <!-- Contêiner do tabuleiro -->
+  <!-- Exibição do temporizador -->
+  <div id="timer">Tempo: 0s</div>
+  <!-- Tabuleiro do jogo -->
   <div class="board" id="board"></div>
 
   <script>
-    // Array de objetos representando as cartas, com 'id' e o caminho da imagem
+    // Array de cartas do jogo
     const cards = [
-      { id: 1, image: "carta.png" },         // Carta 1 com imagem de banana
-      { id: 2, image: "img/cherry.png" },           // Carta 2 com imagem de cherry
-      { id: 3, image: "img/grape.png" },            // Carta 3 com imagem de grape
-      { id: 4, image: "img/watermelon.png" },       // Carta 4 com imagem de watermelon
-      // Cartas duplicadas para formar os pares
-      { id: 1, image: "cartaverde.png" },         // Segundo cartão com id 1
-      { id: 2, image: "img/cherry.png" },           // Segundo cartão com id 2
-      { id: 3, image: "img/grape.png" },            // Segundo cartão com id 3
-      { id: 4, image: "img/watermelon.png" }        // Segundo cartão com id 4
+      { id: 1, image: "carta.png" },
+      { id: 2, image: "img/cherry.png" },
+      { id: 3, image: "img/grape.png" },
+      { id: 4, image: "img/watermelon.png" },
+      { id: 1, image: "cartaverde.png" },
+      { id: 2, image: "img/cherry.png" },
+      { id: 3, image: "img/grape.png" },
+      { id: 4, image: "img/watermelon.png" }
     ];
 
-    // Função para embaralhar o array utilizando o algoritmo de Fisher-Yates
+    // Função para embaralhar o array de cartas
     function shuffle(array) {
-      // Percorre o array de trás para frente
       for (let i = array.length - 1; i > 0; i--) {
-        // Gera um índice aleatório de 0 até i
         const j = Math.floor(Math.random() * (i + 1));
-        // Troca o elemento atual com o elemento na posição aleatória
-        [array[i], array[j]] = [array[j], array[i]];
+        [array[i], array[j]] = [array[j], array[i]]; // Troca os elementos
       }
-      return array; // Retorna o array embaralhado
+      return array;
     }
 
-    // Seleciona o elemento do tabuleiro pelo ID
+    // Referências aos elementos do HTML
     const board = document.getElementById("board");
-    let firstCard = null; // Variável para armazenar a primeira carta virada
-    let secondCard = null; // Variável para armazenar a segunda carta virada
-    let lockBoard = false; // Variável para bloquear o tabuleiro durante a verificação
+    const timerElement = document.getElementById("timer");
+    let firstCard = null, secondCard = null, lockBoard = false;
+    let matches = 0, time = 0, timer;
 
-    // Função para criar o tabuleiro com as cartas embaralhadas
+    // Inicia o temporizador
+    function startTimer() {
+      timer = setInterval(() => {
+        time++; // Incrementa o tempo
+        timerElement.textContent = `Tempo: ${time}s`; // Atualiza a exibição
+      }, 1000);
+    }
+
+    // Para o temporizador
+    function stopTimer() {
+      clearInterval(timer);
+    }
+
+    // Cria o tabuleiro de jogo
     function createBoard() {
-      // Embaralha uma cópia do array de cartas para não alterar o original
-      const shuffledCards = shuffle(cards.slice());
-      // Itera sobre cada carta do array embaralhado
+      const shuffledCards = shuffle(cards.slice()); // Embaralha as cartas
       shuffledCards.forEach(card => {
-        const cardElement = document.createElement("div"); // Cria um elemento div para representar a carta
-        cardElement.classList.add("card"); // Adiciona a classe 'card' para aplicar o estilo
-        // Define os atributos de dados para armazenar o id e a imagem da carta
-        cardElement.dataset.id = card.id;
-        cardElement.dataset.image = card.image;
-        // Adiciona um evento de clique que chama a função flipCard ao ser clicada
-        cardElement.addEventListener("click", flipCard);
-        // Adiciona a carta ao tabuleiro
-        board.appendChild(cardElement);
+        const cardElement = document.createElement("div"); // Cria uma div para a carta
+        cardElement.classList.add("card"); // Adiciona a classe CSS
+        cardElement.dataset.id = card.id; // Armazena o ID da carta
+        cardElement.dataset.image = card.image; // Armazena a imagem da carta
+        cardElement.addEventListener("click", flipCard); // Adiciona evento de clique
+        board.appendChild(cardElement); // Adiciona a carta ao tabuleiro
       });
+      startTimer(); // Inicia o temporizador
     }
 
-    // Função que é executada quando uma carta é clicada
+    // Função para virar uma carta
     function flipCard() {
-      if (lockBoard) return; // Se o tabuleiro estiver bloqueado, não permite virar a carta
-      if (this === firstCard) return; // Impede que a mesma carta seja virada duas vezes
-
-      // Adiciona a classe 'flipped' para alterar o estilo da carta virada
-      this.classList.add("flipped");
-      // Define a imagem de fundo da carta utilizando o valor armazenado em data-image
-      this.style.backgroundImage = `url(${this.dataset.image})`;
-      this.style.backgroundSize = "cover"; // Ajusta a imagem para cobrir toda a carta
-
-      // Se ainda não há uma primeira carta virada, define a carta atual como a primeira carta
+      if (lockBoard || this === firstCard) return; // Impede cliques em cartas bloqueadas
+      this.classList.add("flipped"); // Adiciona classe de carta virada
+      this.style.backgroundImage = `url(${this.dataset.image})`; // Exibe a imagem
+      this.style.backgroundSize = "cover"; // Ajusta o tamanho da imagem
+      
       if (!firstCard) {
-        firstCard = this;
-        return; // Encerra a função e espera pela segunda carta
+        firstCard = this; // Define a primeira carta
+        return;
       }
-      // Define a carta atual como a segunda carta virada
-      secondCard = this;
-
-      // Chama a função para verificar se as duas cartas formam um par
-      checkForMatch();
+      secondCard = this; // Define a segunda carta
+      checkForMatch(); // Verifica se há um par
     }
 
-    // Função que verifica se as duas cartas viradas possuem o mesmo id
+    // Verifica se as cartas formam um par
     function checkForMatch() {
-      // Compara os atributos data-id das duas cartas
-      const isMatch = firstCard.dataset.id === secondCard.dataset.id;
-      if (isMatch) {
-        disableCards(); // Se forem iguais, desabilita o clique nas cartas correspondentes
-      } else {
-        unflipCards(); // Se não forem iguais, desvira as cartas após um tempo
-      }
+      const isMatch = firstCard.dataset.id === secondCard.dataset.id; // Compara IDs
+      isMatch ? disableCards() : unflipCards(); // Executa ação correspondente
     }
 
-    // Função para desabilitar as cartas que formaram um par (removendo o evento de clique)
+    // Desabilita cartas que formam um par
     function disableCards() {
-      firstCard.removeEventListener("click", flipCard); // Remove o evento da primeira carta
-      secondCard.removeEventListener("click", flipCard); // Remove o evento da segunda carta
-      resetBoard(); // Reseta as variáveis para a próxima jogada
+      firstCard.removeEventListener("click", flipCard); // Remove evento da primeira carta
+      secondCard.removeEventListener("click", flipCard); // Remove evento da segunda carta
+      matches++; // Incrementa o número de pares encontrados
+      if (matches === cards.length / 2) stopTimer(); // Para o cronômetro ao finalizar o jogo
+      resetBoard(); // Reseta o estado do tabuleiro
     }
 
-    // Função para desvirar as cartas que não formaram um par
+    // Desvira as cartas que não formam um par
     function unflipCards() {
-      lockBoard = true; // Bloqueia o tabuleiro para evitar novos cliques durante a animação
+      lockBoard = true; // Bloqueia interações temporariamente
       setTimeout(() => {
-        firstCard.classList.remove("flipped"); // Remove a classe 'flipped' da primeira carta
-        secondCard.classList.remove("flipped"); // Remove a classe 'flipped' da segunda carta
-        firstCard.style.backgroundImage = ""; // Remove a imagem de fundo da primeira carta
-        secondCard.style.backgroundImage = ""; // Remove a imagem de fundo da segunda carta
-        resetBoard(); // Reseta as variáveis para a próxima jogada
-      }, 1000); // Aguarda 1000 milissegundos (1 segundo) antes de desvirar as cartas
+        firstCard.classList.remove("flipped"); // Remove classe de virada
+        secondCard.classList.remove("flipped"); // Remove classe de virada
+        firstCard.style.backgroundImage = ""; // Remove a imagem
+        secondCard.style.backgroundImage = ""; // Remove a imagem
+        resetBoard(); // Reseta o estado do tabuleiro
+      }, 1000);
     }
 
-    // Função para resetar as variáveis de controle do jogo
+    // Reseta o estado do jogo
     function resetBoard() {
-      [firstCard, secondCard] = [null, null]; // Redefine as cartas viradas para null
-      lockBoard = false; // Libera o tabuleiro para novos cliques
+      [firstCard, secondCard] = [null, null]; // Limpa cartas selecionadas
+      lockBoard = false; // Libera o tabuleiro
     }
 
-    // Inicializa o jogo criando o tabuleiro com as cartas embaralhadas
+    // Inicializa o jogo
     createBoard();
   </script>
 </body>
